@@ -1,0 +1,2 @@
+import { defineConfig } from "@playwright/test";
+export default defineConfig({ testDir: "./tests/e2e", use: { baseURL: process.env.TEST_BASE_URL || "http://localhost:3100", headless: true }, webServer: process.env.TEST_BASE_URL ? undefined : { command: '"' + process.execPath + '" node_modules/next/dist/bin/next start --port 3100', url: "http://localhost:3100", reuseExistingServer: false, timeout: 120000 } });

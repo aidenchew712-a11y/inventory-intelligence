@@ -1,0 +1,28 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Build output and dependencies
+node_modules/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Local tooling state
+.vercel/
+supabase/.temp/
+supabase/.branches/
+.DS_Store
+Thumbs.db
+
+# Logs and generated reports
+*.log
+reports/generated/
+.release-backup/
+.test-fixture.json
