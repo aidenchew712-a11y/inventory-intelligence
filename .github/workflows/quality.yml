@@ -35,5 +35,6 @@ jobs:
         env:
           APP_URL: http://localhost:3100
           APP_ENV: test
+      - run: node scripts/verify-report-assets.mjs
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e

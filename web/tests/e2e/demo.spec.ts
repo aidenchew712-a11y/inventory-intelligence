@@ -45,12 +45,30 @@ test("public metadata and report exports work; authenticated data stays protecte
   const sitemap = await request.get("/sitemap.xml");
   expect(await sitemap.text()).not.toContain("/dashboard");
   const pdf = await request.get("/api/reports?demo=1&format=pdf");
+  expect(pdf.status(), "PDF endpoint must return a successful response").toBe(200);
   expect(pdf.headers()["content-type"]).toContain("application/pdf");
   expect((await pdf.body()).subarray(0, 4).toString()).toBe("%PDF");
   const excel = await request.get("/api/reports?demo=1&format=xlsx");
   expect(excel.ok()).toBeTruthy();
   const privateReport = await request.get("/api/reports?format=csv", { maxRedirects: 0 });
   expect([303, 307, 401]).toContain(privateReport.status());
+});
+test("PDF download stays on the dashboard and produces a PDF file", async ({ page }) => {
+  await page.goto("/demo");
+  await page.getByRole("button", { name: "Reports", exact: true }).click();
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download PDF", exact: true }).click();
+  expect((await download).suggestedFilename()).toBe("stockroom-inventory.pdf");
+  await expect(page).toHaveURL(/\/demo$/);
+  await expect(page.getByRole("status")).toContainText("PDF report exported.");
+});
+test("report failure leaves the dashboard usable and displays an error", async ({ page }) => {
+  await page.route("**/api/reports?*", (route) => route.fulfill({ status: 500, body: "" }));
+  await page.goto("/demo");
+  await page.getByRole("button", { name: "Reports", exact: true }).click();
+  await page.getByRole("button", { name: "Download PDF", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("The report could not be downloaded.");
+  await expect(page).toHaveURL(/\/demo$/);
 });
 test("mobile navigation and product creation work", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });

@@ -82,11 +82,24 @@ export function Dashboard({ initial, demo }: { initial: Snapshot; demo: boolean 
   }
   function navigate(next: Tab) { setTab(next); setQuery(""); setFilter("all"); setPage(1); setMobile(false); setNotice(""); }
   function open(next: DialogState) { setError(""); setDialog(next); retryKey.current = crypto.randomUUID(); }
-  function downloadReport(format: string) {
-    const a = document.createElement("a");
-    a.href = "/api/reports?format=" + format + (demo ? "&demo=1" : "");
-    a.download = "stockroom-inventory." + format;
-    a.click();
+  async function downloadReport(format: string) {
+    setNotice("Preparing your " + format.toUpperCase() + " report…");
+    try {
+      const response = await fetch("/api/reports?format=" + format + (demo ? "&demo=1" : ""));
+      const contentType = response.headers.get("content-type") ?? "";
+      const expectedType = format === "pdf" ? "application/pdf" : format === "xlsx" ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : "text/csv";
+      if (!response.ok || !contentType.includes(expectedType)) throw new Error("Report generation failed.");
+      const url = URL.createObjectURL(await response.blob());
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "stockroom-inventory." + format;
+      a.click();
+      // Keep the object URL alive until the browser has started the download.
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setNotice(format.toUpperCase() + " report exported.");
+    } catch {
+      setNotice("The report could not be downloaded. Please try again, or sign in if your session has expired.");
+    }
   }
   function downloadCsv() {
     if (data.truncated) { setNotice("Export exceeds this release's 5,000-record limit."); return; }
